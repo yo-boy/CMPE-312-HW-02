@@ -38,7 +38,8 @@ Node* createNode(int data) {
 // Function to insert a new node with the given data into the binary tree
 Node* insert(Node* root, int data) {
     if (root == NULL) {
-        return createNode(data);
+        root = createNode(data);
+        return root;
     }
     if (data < root->data) {
         root->left = insert(root->left, data);
@@ -49,46 +50,66 @@ Node* insert(Node* root, int data) {
 }
 
 // Function to search for a node with the given data in the binary tree
-Node* search(Node* root, int data) {
+Node* searchHelper(Node* root, int data) {
     if (root == NULL || root->data == data) {
         return root;
     }
     if (data < root->data) {
-        return search(root->left, data);
+        return searchHelper(root->left, data);
     } else {
-        return search(root->right, data);
+        return searchHelper(root->right, data);
+    }
+}
+
+void search(Node* root, int data) {
+    Node* node = searchHelper(root, data);
+    if (node != NULL) {
+        printf("Found node with data %d\n", node->data);
+    } else {
+            printf("Node with data %d not found\n", data);
     }
 }
 
 // Function to traverse the binary tree in order and print out the data of each node
-void traverse(Node* root) {
+void traversehelper(Node* root) {
     if (root != NULL) {
-        traverse(root->left);
+        traversehelper(root->left);
         printf("%d ", root->data);
-        traverse(root->right);
+        traversehelper(root->right);
     }
+}
+
+void traverse(Node* root){
+    printf("Inorder traversal: ");
+    traversehelper(root);
+    printf("\n");
+}
+
+// Initialize the root node of a tree
+void initTree(Tree* tree, int data){
+    tree->root = createNode(data);
 }
 
 // Main function for testing
 int main() {
     Tree tree;
-    printf("test");
-    tree.root = NULL;
-    tree.root = insert(tree.root, 10);
+    initTree(&tree, 10);
     insert(tree.root, 5);
     insert(tree.root, 15);
     insert(tree.root, 3);
     insert(tree.root, 7);
     insert(tree.root, 12);
     insert(tree.root, 17);
-    printf("Inorder traversal: ");
     traverse(tree.root);
-    printf("\n");
-    Node* node = search(tree.root, 7);
-    if (node != NULL) {
-        printf("Found node with data %d\n", node->data);
-    } else {
-        printf("Node not found\n");
-    }
+    search(tree.root, 7);
+    search(tree.root, 3);
+    search(tree.root, 15);
+    search(tree.root, 12);
+    search(tree.root, 17);
+    search(tree.root, 123);
+    traverse(tree.root);
+    insert(tree.root, 123);
+    traverse(tree.root);
+    search(tree.root, 123);
     return 0;
 }
