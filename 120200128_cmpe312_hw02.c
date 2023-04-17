@@ -9,6 +9,16 @@ typedef struct node {
     struct node* right;
 } Node;
 
+typedef struct tree {
+    Node* root;
+    pthread_mutex_t mutex;
+} Tree;
+
+typedef struct binaryTreeFunctionArgs {
+    Tree* tree;
+    int data;
+} callArgs;
+
 // Function to create a new node with the given data
 Node* createNode(int data) {
     // Allocate memory for the new node
@@ -61,19 +71,20 @@ void traverse(Node* root) {
 
 // Main function for testing
 int main() {
+    Tree tree;
     printf("test");
-    Node* binaryTreeRoot = NULL;
-    binaryTreeRoot = insert(binaryTreeRoot, 10);
-    insert(binaryTreeRoot, 5);
-    insert(binaryTreeRoot, 15);
-    insert(binaryTreeRoot, 3);
-    insert(binaryTreeRoot, 7);
-    insert(binaryTreeRoot, 12);
-    insert(binaryTreeRoot, 17);
+    tree.root = NULL;
+    tree.root = insert(tree.root, 10);
+    insert(tree.root, 5);
+    insert(tree.root, 15);
+    insert(tree.root, 3);
+    insert(tree.root, 7);
+    insert(tree.root, 12);
+    insert(tree.root, 17);
     printf("Inorder traversal: ");
-    traverse(binaryTreeRoot);
+    traverse(tree.root);
     printf("\n");
-    Node* node = search(binaryTreeRoot, 7);
+    Node* node = search(tree.root, 7);
     if (node != NULL) {
         printf("Found node with data %d\n", node->data);
     } else {
