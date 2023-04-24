@@ -121,16 +121,24 @@ int main() {
     insert(tree.root, 123);
     traverse(tree.root);
     search(tree.root, 123);
+
     // Initialize the mutex before usage
     pthread_mutex_init(&tree.mutex, NULL);
 
     // we create two threads for search and insert
     pthread_t t1;
     pthread_t t2;
-
+    // defining the arguments that will be passed to the thread functions
     callArgs args = {.tree = &tree, .data = 7};
     callArgs diffArgs = {.tree = &tree, .data = 13345};
-    // here we call both an insert and a search with the same data (that isn't already in the tree), each time we run this program the result can be different because we cannot predict which thread will go first and lock the tree
+    /*
+    * here we call both an insert and a search with the same data (that isn't already in the tree),
+    * each time we run this program the result can be different
+    * because we cannot predict which thread will go first and lock the tree,
+    * this is non-deterministic behavior, I will attach a screenshot of it happening,
+    * if we want to avoid it we must wait for all threads that insert into the tree to finish and join-
+    * before we search for the same values they had inserted with another thread.
+    */
     pthread_create(&t2, NULL, threadedInsert, &args);
     pthread_create(&t1, NULL, threadedSearch, &args);
     // we wait for both threads to finish before using them again
