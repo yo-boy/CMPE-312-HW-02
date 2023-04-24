@@ -9,11 +9,13 @@ typedef struct node {
     struct node* right;
 } Node;
 
+// the tree structure holds a mutex to insure synchronization and that no inserts or searches happen at the same time
 typedef struct tree {
     Node* root;
     pthread_mutex_t mutex;
 } Tree;
 
+// this struct holds all the arguments needed for a search or an insert, we use it since a thread function cannot take anything other than a void* pointer
 typedef struct binaryTreeFunctionArgs {
     Tree* tree;
     int data;
@@ -50,23 +52,19 @@ Node* insert(Node* root, int data) {
 }
 
 // Function to search for a node with the given data in the binary tree
-Node* searchHelper(Node* root, int data) {
-    if (root == NULL || root->data == data) {
-        return root;
+void search(Node* root, int data) {
+    if (root == NULL) {
+        printf("Node with data %d not found\n", data);
+        return;
+    }
+    if (root->data == data) {
+        printf("Found node with data %d\n", data);
+        return;
     }
     if (data < root->data) {
-        return searchHelper(root->left, data);
+        search(root->left, data);
     } else {
-        return searchHelper(root->right, data);
-    }
-}
-
-void search(Node* root, int data) {
-    Node* node = searchHelper(root, data);
-    if (node != NULL) {
-        printf("Found node with data %d\n", node->data);
-    } else {
-            printf("Node with data %d not found\n", data);
+        search(root->right, data);
     }
 }
 
@@ -78,7 +76,7 @@ void traversehelper(Node* root) {
         traversehelper(root->right);
     }
 }
-
+// the extra function is to just print it nicely while keeping the recursive nature of the traversal
 void traverse(Node* root){
     printf("Inorder traversal: ");
     traversehelper(root);
@@ -90,20 +88,32 @@ void initTree(Tree* tree, int data){
     tree->root = createNode(data);
 }
 
-// Main function for testing
+// this function can be run in a thread, it locks the mutex of the tree and then runs a search before unlocking the mutex again
+void* threadedSearch(void* args){
+    callArgs* arguments = (callArgs*) args;
+    pthread_mutex_lock(&arguments->tree->mutex);
+    search(arguments->tree->root, arguments->data);
+    pthread_mutex_unlock(&arguments->tree->mutex);
+    return NULL;
+}
+
+// this function locks the mutex of the tree and then inserts the data we give it before unlocking the mutex again
+void* threadedInsert(void* args){
+    callArgs* arguments = (callArgs*) args;
+    pthread_mutex_lock(&arguments->tree->mutex);
+    insert(arguments->tree->root, arguments->data);
+    pthread_mutex_unlock(&arguments->tree->mutex);
+    return NULL;
+}
+
 int main() {
+    // we define and Initialize the tree and then fill it and search it with non-threaded functions
     Tree tree;
     initTree(&tree, 10);
     insert(tree.root, 5);
-    insert(tree.root, 15);
-    insert(tree.root, 3);
-    insert(tree.root, 7);
     insert(tree.root, 12);
     insert(tree.root, 17);
     traverse(tree.root);
-    search(tree.root, 7);
-    search(tree.root, 3);
-    search(tree.root, 15);
     search(tree.root, 12);
     search(tree.root, 17);
     search(tree.root, 123);
@@ -111,5 +121,28 @@ int main() {
     insert(tree.root, 123);
     traverse(tree.root);
     search(tree.root, 123);
+    // Initialize the mutex before usage
+    pthread_mutex_init(&tree.mutex, NULL);
+
+    // we create two threads for search and insert
+    pthread_t t1;
+    pthread_t t2;
+
+    callArgs args = {.tree = &tree, .data = 7};
+    callArgs diffArgs = {.tree = &tree, .data = 13345};
+    // here we call both an insert and a search with the same data (that isn't already in the tree), each time we run this program the result can be different because we cannot predict which thread will go first and lock the tree
+    pthread_create(&t2, NULL, threadedInsert, &args);
+    pthread_create(&t1, NULL, threadedSearch, &args);
+    // we wait for both threads to finish before using them again
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    // here we do the same thing again
+    pthread_create(&t2, NULL, threadedInsert, &diffArgs);
+    pthread_create(&t1, NULL, threadedSearch, &diffArgs);
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    // destroy the mutex after we're done with it
+    pthread_mutex_destroy(&tree.mutex);
+
     return 0;
 }
