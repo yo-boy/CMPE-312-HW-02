@@ -135,8 +135,8 @@ int main() {
     * here we call both an insert and a search with the same data (that isn't already in the tree),
     * each time we run this program the result can be different
     * because we cannot predict which thread will go first and lock the tree,
-    * this is non-deterministic behavior, I will attach a screenshot of it happening,
-    * if we want to avoid it we must wait for all threads that insert into the tree to finish and join-
+    * this is non-deterministic behavior, if we want to avoid it we-
+    * must wait for all threads that insert into the tree to finish and join-
     * before we search for the same values they had inserted with another thread.
     */
     pthread_create(&t2, NULL, threadedInsert, &args);
